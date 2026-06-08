@@ -72,6 +72,8 @@ Télécharge `DofusSwitcher.exe` depuis les [Releases](../../releases), lance-le
 
 Les paramètres sont sauvegardés dans `%AppData%\DofusSwitcher\settings.json`.
 
+> **SmartScreen / "éditeur inconnu"** : Windows peut afficher un avertissement au premier lancement car l'exe n'est pas signé par une autorité de certification commerciale. Clique sur **"Plus d'informations" → "Exécuter quand même"** pour continuer. L'avertissement disparaît une fois que l'exe a acquis suffisamment de téléchargements auprès de Microsoft.
+
 ---
 
 ## Compilation depuis les sources
@@ -84,3 +86,4 @@ dotnet publish -c Release
 ```
 
 Requiert [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+*Code signing provided by [SignPath Foundation](https://signpath.org/)*
