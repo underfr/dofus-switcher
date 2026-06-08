@@ -1,0 +1,321 @@
+<Window x:Class="DofusSwitcher.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:DofusSwitcher.Converters"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        SizeToContent="Height"
+        Width="260">
+
+    <Window.Resources>
+        <conv:PresetIconConverter x:Key="PresetIconConv"/>
+
+        <!-- Bouton overlay générique -->
+        <Style x:Key="OvBtn" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Foreground" Value="#7777AA"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="Transparent" CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#2A2A50"/>
+                                <Setter Property="Foreground" Value="#AAAAEE"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#3A3A70"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Bouton close (rouge au hover) -->
+        <Style x:Key="OvCloseBtn" TargetType="Button" BasedOn="{StaticResource OvBtn}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#FF6666"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Bouton activer (vert) -->
+        <Style x:Key="OvActivateBtn" TargetType="Button" BasedOn="{StaticResource OvBtn}">
+            <Setter Property="Foreground" Value="#3A7A3A"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#66CC66"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <!-- Conteneur principal semi-transparent arrondi -->
+    <Border Background="#E01A1A2E" CornerRadius="10"
+            BorderBrush="#3A3A60" BorderThickness="1">
+        <StackPanel>
+
+            <!-- ══ HEADER — toujours visible, draggable ══ -->
+            <Grid Height="56" Cursor="SizeAll"
+                  MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="40"/>   <!-- sprite actif -->
+                    <ColumnDefinition Width="*"/>    <!-- nom / classe -->
+                    <ColumnDefinition Width="28"/>   <!-- btn presets -->
+                    <ColumnDefinition Width="26"/>   <!-- toggle ▼▲ -->
+                    <ColumnDefinition Width="24"/>   <!-- close ✕ -->
+                    <ColumnDefinition Width="6"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Sprite du perso actif -->
+                <Border Grid.Column="1" Width="36" Height="36" CornerRadius="5"
+                        Background="#16162A" VerticalAlignment="Center">
+                    <Grid>
+                        <Image x:Name="imgActiveSprite"
+                               Width="34" Height="34" Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               Visibility="Collapsed"/>
+                        <Ellipse x:Name="dotActive"
+                                 Width="10" Height="10"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 Visibility="Collapsed"/>
+                    </Grid>
+                </Border>
+
+                <!-- Nom + Classe du perso actif -->
+                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="8,0,4,0">
+                    <TextBlock x:Name="tbActiveName" Text="Aucune fenêtre"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="#E0E0FF" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="tbActiveClass" Text=""
+                               FontSize="11" Foreground="#8888BB"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+
+                <!-- Bouton sélecteur de preset (icône ou ☰) -->
+                <Button x:Name="btnPresets" Grid.Column="3"
+                        Style="{StaticResource OvBtn}"
+                        Width="24" Height="24"
+                        Padding="2"
+                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                        ToolTip="Changer de preset"
+                        Cursor="Hand"
+                        Click="BtnPresets_Click">
+                    <Grid Width="20" Height="20">
+                        <!-- Icône du preset actif -->
+                        <Image x:Name="imgPresetIcon"
+                               Width="18" Height="18" Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               Visibility="Collapsed"/>
+                        <!-- Fallback texte si pas d'icône -->
+                        <TextBlock x:Name="tbPresetFallback"
+                                   Text="☰" FontSize="11"
+                                   Foreground="#6666AA"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   FontFamily="Segoe UI Emoji"/>
+                    </Grid>
+                </Button>
+
+                <!-- Popup liste des presets -->
+                <Popup x:Name="presetPopup"
+                       Grid.Column="3"
+                       PlacementTarget="{Binding ElementName=btnPresets}"
+                       Placement="Bottom"
+                       StaysOpen="False"
+                       AllowsTransparency="True"
+                       PopupAnimation="Fade">
+                    <Border Background="#1C1C34"
+                            BorderBrush="#5555AA" BorderThickness="1"
+                            CornerRadius="6" Padding="4"
+                            MinWidth="180" MaxHeight="280">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl x:Name="icPresets">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Tag="{Binding}" Click="PresetItem_Click"
+                                                Cursor="Hand">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="bd" Background="Transparent"
+                                                            CornerRadius="4" Padding="8,6">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <!-- Icône preset -->
+                                                            <Border Width="20" Height="20"
+                                                                    Margin="0,0,7,0" CornerRadius="3"
+                                                                    Background="#252545"
+                                                                    VerticalAlignment="Center">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IconIndex}" Value="-1">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <Image Source="{Binding IconIndex, Converter={StaticResource PresetIconConv}}"
+                                                                       Width="16" Height="16" Stretch="Uniform"
+                                                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                            </Border>
+                                                            <!-- Nom -->
+                                                            <TextBlock Text="{Binding Name}"
+                                                                       Foreground="#CCCCEE" FontSize="12"
+                                                                       VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="bd" Property="Background" Value="#2E2E58"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter TargetName="bd" Property="Background" Value="#3A3A70"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </Popup>
+
+                <!-- Expand / Collapse -->
+                <Button x:Name="btnToggle" Grid.Column="4"
+                        Content="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                        Style="{StaticResource OvBtn}"
+                        Padding="4" Width="22" Height="22"
+                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Click="BtnToggle_Click"/>
+
+                <!-- Masquer l'overlay -->
+                <Button Grid.Column="5"
+                        Content="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                        Style="{StaticResource OvCloseBtn}"
+                        Padding="3" Width="20" Height="20"
+                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Click="BtnClose_Click"/>
+            </Grid>
+
+            <!-- ══ LISTE EXPANSÉE ══ -->
+            <Border x:Name="expandedPanel" Visibility="Collapsed"
+                    BorderBrush="#252545" BorderThickness="0,1,0,0"
+                    Margin="0,0,0,6">
+                <ScrollViewer MaxHeight="340"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl x:Name="overlayList" Margin="6,4,6,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="6" Margin="0,2" Padding="2,0" BorderThickness="1">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                    <Setter Property="Background" Value="#1E2050"/>
+                                                    <Setter Property="BorderBrush" Value="#4444AA"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+
+                                    <Grid Height="44">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="26"/>
+                                            <ColumnDefinition Width="36"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="44"/>
+                                            <ColumnDefinition Width="28"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding PlayOrder}"
+                                                   Foreground="#5555AA" FontSize="11" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                                        <Border Grid.Column="1" Width="32" Height="32"
+                                                CornerRadius="4" Background="#16162A"
+                                                VerticalAlignment="Center">
+                                            <Grid>
+                                                <Image Source="{Binding SpriteSource}"
+                                                       Width="30" Height="30" Stretch="Uniform"
+                                                       RenderOptions.BitmapScalingMode="HighQuality">
+                                                    <Image.Style>
+                                                        <Style TargetType="Image">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasSprite}" Value="False">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Image.Style>
+                                                </Image>
+                                                <Ellipse Width="8" Height="8" Fill="{Binding ClassBrush}"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasSprite}" Value="False">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                            </Grid>
+                                        </Border>
+
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding CharacterName}"
+                                                   FontSize="12" Foreground="#BBBBDD"
+                                                   VerticalAlignment="Center" Margin="6,0,2,0"
+                                                   TextTrimming="CharacterEllipsis"/>
+
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <Button Content="&#xE70E;" FontFamily="Segoe MDL2 Assets"
+                                                    Style="{StaticResource OvBtn}"
+                                                    FontSize="8" Padding="3,2" Width="18" Height="18"
+                                                    Margin="0,0,2,0"
+                                                    Tag="{Binding}" Click="OverlayMoveUp_Click"/>
+                                            <Button Content="&#xE70D;" FontFamily="Segoe MDL2 Assets"
+                                                    Style="{StaticResource OvBtn}"
+                                                    FontSize="8" Padding="3,2" Width="18" Height="18"
+                                                    Tag="{Binding}" Click="OverlayMoveDown_Click"/>
+                                        </StackPanel>
+
+                                        <Button Grid.Column="4"
+                                                Content="&#xE768;" FontFamily="Segoe MDL2 Assets"
+                                                Style="{StaticResource OvActivateBtn}"
+                                                FontSize="11" Padding="3,2" Width="24" Height="24"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                Tag="{Binding}" Click="OverlayActivate_Click"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+        </StackPanel>
+    </Border>
+</Window>

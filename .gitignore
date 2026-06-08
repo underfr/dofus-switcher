@@ -1,0 +1,31 @@
+# Build outputs
+bin/
+obj/
+
+# Images README (hébergées sur la branche orpheline `assets`, pas sur main)
+imggit/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vcxproj.filters
+
+# Rider
+.idea/
+
+# Logs & crash
+*.log
+*.tmp
+crash*.txt
+
+# Paramètres utilisateur (générés au runtime, propres à chaque machine)
+%APPDATA%/DofusSwitcher/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
