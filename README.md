@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/under-side/DofusSwitcher/assets/home.png" width="420" alt="Dofus Switcher"/>
+<img src="https://raw.githubusercontent.com/underfr/DofusSwitcher/assets/home.png" width="420" alt="Dofus Switcher"/>
 
 # Dofus Switcher
 
@@ -31,7 +31,7 @@
 
 | Fenêtre principale | Overlay réduit | Overlay développé |
 |:-:|:-:|:-:|
-| <img src="https://raw.githubusercontent.com/under-side/DofusSwitcher/assets/home.png" width="300"/> | <img src="https://raw.githubusercontent.com/under-side/DofusSwitcher/assets/overlay_close.png" width="180"/> | <img src="https://raw.githubusercontent.com/under-side/DofusSwitcher/assets/overlay_open.png" width="180"/> |
+| <img src="https://raw.githubusercontent.com/underfr/DofusSwitcher/assets/home.png" width="300"/> | <img src="https://raw.githubusercontent.com/underfr/DofusSwitcher/assets/overlay_close.png" width="180"/> | <img src="https://raw.githubusercontent.com/underfr/DofusSwitcher/assets/overlay_open.png" width="180"/> |
 
 ---
 
